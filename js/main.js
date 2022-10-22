@@ -1,21 +1,39 @@
 import canvas from './classes/Canvas.js';
+import entities from './classes/Entities.js';
 import utility from './classes/Utility.js';
-import Player from './classes/Player.js';
-import Enemy from './classes/Enemy.js';
 
 class Main {
 
-  constructor() {
-    this.canvas = canvas;
-    this.utility = utility;
-    this.player = new Player({ canvas });
-    this.enemy = new Enemy({ canvas });
+  canvas;
+  entities;
+  utility;
+
+  constructor(data) {
+    this.canvas = data.canvas;
+    this.entities = data.entities;
+    this.utility = data.utility;
+
+    this.entities.createEntity({ 
+      kind: 'player',
+      canvas: this.canvas,
+      master: this,
+    });
+
+    this.entities.createEntity({ 
+      kind: 'enemy',
+      canvas: this.canvas,
+      utility: this.utility
+    });
 
     setInterval(() => this.gameLoop(), 33);
   }
 
-  request(what) {
+  request(what, data) {
     switch(what) {
+      case 'createEntity':
+        this.entities.createEntity(data)
+        break;
+
       default:
         console.error('Requested unknown action.');
     }
@@ -24,13 +42,10 @@ class Main {
   gameLoop() {
     this.canvas.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    this.player.logic();
-    this.enemy.logic();
-
-    this.player.draw();
-    this.enemy.draw();
+    this.entities.logic();
+    this.entities.draw();
   }
 
 }
 
-const main = new Main();
+const main = new Main({ canvas, entities, utility });

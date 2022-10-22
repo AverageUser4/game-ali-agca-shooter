@@ -8,22 +8,24 @@ export default class Player {
   maxY;
   width = 25;
   height = 45;
-  speed = 5;
+  speed = 7;
   health = 100;
 
   shooting = false;
+  attackCooldown = 0;
+
+  jumpCooldown = 0;
+  isJumping = false;
+  
   pressedKeys = new Set();
-  shootCooldown = 0;
-
-  bullets = [];
-
   mouseOffsetX;
   mouseOffsetY;
 
-  machineGunSFX = new Audio('resources/machine-gun-sfx.mp3');;
+  gunSFX = new Audio('resources/gunshot.mp3');;
 
-  constructor(dependencies) {
-    this.canvas = dependencies.canvas;
+  constructor(data) {
+    this.canvas = data.canvas;
+    this.master = data.master;
 
     this.maxX = this.canvas.width - this.width;
     this.maxY = this.canvas.height - this.height;
@@ -54,18 +56,33 @@ export default class Player {
   logic() {
     this.x = this.pressedKeys.has('a') ? this.x - this.speed : this.x;
     this.x = this.pressedKeys.has('d') ? this.x + this.speed : this.x;
-    // this.y = this.pressedKeys.has('w') ? this.y - this.speed : this.y;
-    // this.y = this.pressedKeys.has('s') ? this.y + this.speed : this.y;
 
-    this.shootCooldown--;
+    this.jumpCooldown--;
 
-    if(this.shooting && this.shootCooldown <= 0) {
-      this.shootCooldown = 20;
-      this.bullets.push(new Bullet({ canvas: this.canvas }, this.x, this.y, this.mouseOffsetX, this.mouseOffsetY))
+    if(this.jumpCooldown > 10)
+      this.y -= 2;
+    else
+      this.y += 4;
+
+    if(this.pressedKeys.has('w') && this.jumpCooldown <= 0)
+      this.jumpCooldown = 20;
+
+    
+    this.attackCooldown--;
+
+    if(this.shooting && this.attackCooldown <= 0) {
+      this.attackCooldown = 20;
+      this.master.request('createEntity', {
+        kind: 'bullet',
+        canvas: this.canvas,
+        x: this.x,
+        y: this.y,
+        destinationX: this.mouseOffsetX,
+        destinationY: this.mouseOffsetY,
+      });
+
+      this.gunSFX.cloneNode().play();
     }
-
-    for(let bullet of this.bullets)
-      bullet.logic();
 
     this.x = Math.min(Math.max(this.x, 0), this.maxX);
     this.y = Math.min(Math.max(this.y, 0), this.maxY);
@@ -74,9 +91,6 @@ export default class Player {
   draw() {
     this.canvas.context.fillStyle = 'green';
     this.canvas.context.fillRect(this.x, this.y, this.width, this.height);
-
-    for(let bullet of this.bullets)
-      bullet.draw();
   }
 
 }

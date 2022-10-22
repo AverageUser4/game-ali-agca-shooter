@@ -7,28 +7,44 @@ export default class Bullet {
   radius = 5;
   speedBase = 20;
 
-  outOfCanvas = true;
+  removeFromGame = false;
 
-  constructor(dependencies, x, y, destinationX, destinationY) {
-    this.canvas = dependencies.canvas;
+  constructor(data) {
+    this.canvas = data.canvas;
 
-    this.x = x;
-    this.y = y;
+    this.x = data.x;
+    this.y = data.y;
 
-    this.speedX = 25;//destinationX / destinationY * this.speedBase;
-    this.speedY = 0;//destinationY / destinationX * this.speedBase;
+    const distanceX = Math.abs(data.x - data.destinationX);
+    const distanceY = Math.abs(data.y - data.destinationY);
+
+    let proportionX = 1;
+    let proportionY = 1;
+
+    if(distanceX > distanceY)
+      proportionY = distanceY / distanceX;
+    else
+      proportionX = distanceX / distanceY;
+
+    if(data.destinationX < data.x)
+      proportionX *= -1;
+    if(data.destinationY < data.y)
+      proportionY *= -1;
+
+    this.speedX = this.speedBase * proportionX;
+    this.speedY = this.speedBase * proportionY;
   }
 
   logic() {
     this.x += this.speedX;
     this.y += this.speedY;
 
-    this.outOfCanvas = this.x > this.canvas.width || this.x < 0 ||
+    this.removeFromGame = this.x > this.canvas.width || this.x < 0 ||
       this.y > this.canvas.height || this.y < 0;
   }
 
   draw() {
-    this.canvas.context.fillStyle = 'red';
+    this.canvas.context.fillStyle = 'yellow';
     this.canvas.context.beginPath();
     this.canvas.context.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
     this.canvas.context.fill();
