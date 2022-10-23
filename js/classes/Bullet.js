@@ -4,7 +4,7 @@ export default class Bullet {
   y;
   speedX;
   speedY;
-  radius = 5;
+  radius = 4;
   speedBase = 20;
 
   removeFromGame = false;

@@ -45,7 +45,7 @@ class Entities {
   }
 
   draw() {
-    for(let entity of [...this.players, ...this.enemies, ...this.bullets])
+    for(let entity of [...this.bullets, ...this.enemies, ...this.players])
       entity.draw();
   }
 

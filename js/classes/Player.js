@@ -3,11 +3,11 @@ import Bullet from './Bullet.js';
 export default class Player {
 
   x = 0;
-  y;
+  y = 0;
   maxX;
   maxY;
-  width = 25;
-  height = 45;
+  width;
+  height;
   speed = 7;
   health = 100;
 
@@ -21,15 +21,24 @@ export default class Player {
   mouseOffsetX;
   mouseOffsetY;
 
-  gunSFX = new Audio('resources/gunshot.mp3');;
+  gunSFX = new Audio('resources/gunshot.mp3');
+
+  images = {
+    body: new Image(),
+    gun: new Image(),
+    head: new Image(),
+    leftArm: new Image(),
+    leftLeg: new Image(),
+    rightArm: new Image(),
+    rightLeg: new Image(),
+  }
+  imagesLoaded = 0;
+  imagesRequired = 0;
+  imagesReady = false;
 
   constructor(data) {
     this.canvas = data.canvas;
     this.master = data.master;
-
-    this.maxX = this.canvas.width - this.width;
-    this.maxY = this.canvas.height - this.height;
-    this.y = this.maxY;
 
     this.canvas.element.addEventListener('mousedown', () => {
       this.shooting = true;
@@ -39,6 +48,30 @@ export default class Player {
       this.mouseOffsetX = event.offsetX;
       this.mouseOffsetY = event.offsetY;
     });
+
+    for(let key in this.images) {
+      this.imagesRequired++;
+
+      this.images[key].addEventListener('load', () => {
+        this.imagesLoaded++;
+
+        if(this.imagesLoaded >= this.imagesRequired)
+          this.imagesReady = true;
+
+        this.width = this.images[key].naturalWidth;
+        this.height = this.images[key].naturalHeight;
+
+        this.maxX = this.canvas.width - this.width;
+        this.maxY = this.canvas.height - this.height;
+        this.y = this.maxY;
+      });
+
+      this.images[key].addEventListener('error', () => {
+        console.error(`Unable to load image ${key}`);
+      })
+
+      this.images[key].src = `resources/player/${key}.png`;
+    }
 
     window.addEventListener('mouseup', () => {
       this.shooting = false;
@@ -75,8 +108,8 @@ export default class Player {
       this.master.request('createEntity', {
         kind: 'bullet',
         canvas: this.canvas,
-        x: this.x,
-        y: this.y,
+        x: this.x + this.width,
+        y: this.y + this.height * 0.25,
         destinationX: this.mouseOffsetX,
         destinationY: this.mouseOffsetY,
       });
@@ -89,8 +122,18 @@ export default class Player {
   }
 
   draw() {
-    this.canvas.context.fillStyle = 'green';
-    this.canvas.context.fillRect(this.x, this.y, this.width, this.height);
+    if(this.imagesReady) {
+      this.canvas.context.drawImage(this.images.leftArm, this.x, this.y);
+      this.canvas.context.drawImage(this.images.leftLeg, this.x, this.y);
+      this.canvas.context.drawImage(this.images.rightLeg, this.x, this.y);
+      this.canvas.context.drawImage(this.images.body, this.x, this.y);
+      this.canvas.context.drawImage(this.images.head, this.x, this.y);
+      this.canvas.context.drawImage(this.images.gun, this.x, this.y);
+      this.canvas.context.drawImage(this.images.rightArm, this.x, this.y);
+
+      this.canvas.context.strokeStyle = 'green';
+      this.canvas.context.strokeRect(this.x, this.y, this.width, this.height);
+    }
   }
 
 }
