@@ -21,7 +21,7 @@ export default class Player {
   mouseOffsetX;
   mouseOffsetY;
 
-  gunSFX = new Audio('resources/gunshot.mp3');
+  gunSFX = new Audio('resources/browning.mp3');
 
   images = {
     body: new Image(),
@@ -137,3 +137,4 @@ export default class Player {
   }
 
 }
+

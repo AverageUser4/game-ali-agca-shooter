@@ -8,10 +8,17 @@ class Main {
   entities;
   utility;
 
+  backgroundImage;
+  backgroundReady = false;
+
   constructor(data) {
     this.canvas = data.canvas;
     this.entities = data.entities;
     this.utility = data.utility;
+
+    this.backgroundImage = new Image();
+    this.backgroundImage.addEventListener('load', () => this.backgroundReady = true);
+    this.backgroundImage.src = 'resources/bazylika.jpg';
 
     this.entities.createEntity({ 
       kind: 'player',
@@ -43,6 +50,10 @@ class Main {
     this.canvas.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
     this.entities.logic();
+
+    if(this.backgroundReady)
+      this.canvas.context.drawImage(this.backgroundImage, 0, 0);
+
     this.entities.draw();
   }
 

@@ -1,7 +1,7 @@
 const element = document.querySelector('canvas');
 const context = element.getContext('2d');
-const width = 800;
-const height = 600;
+const width = parseInt(element.width);
+const height = parseInt(element.height);
 
 export default {
   element,
