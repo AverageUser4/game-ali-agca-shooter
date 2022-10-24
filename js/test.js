@@ -15,41 +15,19 @@ let speed = 10;
 let offsetX = 0;
 let offsetY = 0;
 let shootingArmRadian = 0;
-let cx = 20;
-let cy = 72;
+
 
 const bg = new Image();
 bg.src = 'bg.jpg';
 
-function degreesToRadians(degrees) {
-  return Math.PI * degrees / 180;
-}
 
-function radiansToDegrees(radians) {
-  return radians * 180 / Math.PI;
-}
+
 
 window.addEventListener('keydown', (event) => {
   pressedKeys.add(event.key);
 });
 window.addEventListener('keyup', (event) => {
   pressedKeys.delete(event.key);
-});
-
-canvas.addEventListener('mousemove', (event) => {
-  offsetX = event.offsetX;
-  offsetY = event.offsetY;
-
-  /* https://qr.ae/pvm1Md */
-  let slope = (offsetY - y - cy) / (offsetX - x - cx);
-  shootingArmRadian = Math.atan(slope);
-
-  // center of the hand (cy) is not perfectly aligned with gun
-
-  if(offsetX < x + cx) {
-    let buf = radiansToDegrees(shootingArmRadian);
-    shootingArmRadian = degreesToRadians(-90 + (-90 + buf));
-  }
 });
 
 

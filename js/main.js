@@ -24,6 +24,7 @@ class Main {
       kind: 'player',
       canvas: this.canvas,
       master: this,
+      utility: this.utility,
     });
 
     this.entities.createEntity({ 

@@ -16,7 +16,14 @@ const mirrorImage = (canvas, image, x = 0, y = 0, horizontal = false, vertical =
   canvas.context.restore();
 }
 
+const degreesToRadians = (degrees) => Math.PI * degrees / 180;
+
+const radiansToDegrees = (radians) => radians * 180 / Math.PI;
+
+
 export default {
   randomInteger,
-  mirrorImage
+  mirrorImage,
+  degreesToRadians,
+  radiansToDegrees
 };
