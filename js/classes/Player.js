@@ -11,6 +11,8 @@ export default class Player {
   speed = 7;
   health = 100;
 
+  directionX = 1;
+
   isShooting = false;
   attackCooldown = 0;
   
@@ -21,6 +23,7 @@ export default class Player {
   mouseOffsetY;
 
   gunSFX = new Audio('resources/browning.mp3');
+  jumpSFX = new Audio('resources/jump.mp3');
 
   images = {
     body: new Image(),
@@ -118,13 +121,14 @@ export default class Player {
   }
 
   moveLimbs() {
+    const limbSpeed = 3;
     for(let limb of ['rightLeg', 'leftLeg', 'leftArm']) {
       if(this[`${limb}Direction`] === -1) {
-        this[`${limb}Radian`] -= this.utility.degreesToRadians(1);
+        this[`${limb}Radian`] -= this.utility.degreesToRadians(limbSpeed);
         if(this.utility.radiansToDegrees(this[`${limb}Radian`]) < -20)
           this[`${limb}Direction`] = 1;
       } else {
-        this[`${limb}Radian`] += this.utility.degreesToRadians(1);
+        this[`${limb}Radian`] += this.utility.degreesToRadians(limbSpeed);
         if(this.utility.radiansToDegrees(this[`${limb}Radian`]) > 20)
           this[`${limb}Direction`] = -1;
       }
@@ -148,11 +152,23 @@ export default class Player {
     else if(this.jumpCooldown <= 15)
       this.y += 10;
 
-    if(this.pressedKeys.has('w') && this.jumpCooldown <= 0)
+    if(this.pressedKeys.has('w') && this.jumpCooldown <= 0) {
       this.jumpCooldown = 40;
+      this.jumpSFX.cloneNode().play();
+    }
 
     this.x = Math.min(Math.max(this.x, 0), this.maxX);
     this.y = Math.min(Math.max(this.y, 0), this.maxY);
+
+    if(this.mouseOffsetX < this.x + this.width / 2)
+      this.directionX = -1;
+    else
+      this.directionX = 1;
+
+    if(this.directionX === -1)
+      this.rightArmRotationCenterX = this.width - 20;
+    else
+      this.rightArmRotationCenterX = 20;
   }
 
   attackLogic() {
@@ -160,9 +176,9 @@ export default class Player {
 
     if(this.isShooting && this.attackCooldown <= 0) {
       /*! https://math.stackexchange.com/questions/260096/find-the-coordinates-of-a-point-on-a-circle */
-      // move 8 degrees to adjust bullet's position with the gun
-      const sx = this.rightArmRadius * Math.cos(this.rightArmRadian - this.utility.degreesToRadians(8));
-      const sy = this.rightArmRadius * Math.sin(this.rightArmRadian - this.utility.degreesToRadians(8));
+      const gunPointAdjustment = this.directionX === 1 ? this.utility.degreesToRadians(8) : this.utility.degreesToRadians(-10);
+      const sx = this.rightArmRadius * Math.cos(this.rightArmRadian - gunPointAdjustment);
+      const sy = this.rightArmRadius * Math.sin(this.rightArmRadian - gunPointAdjustment);
 
       this.master.request('createEntity', {
         kind: 'bullet',
@@ -188,7 +204,7 @@ export default class Player {
 
       this.drawLimbs(['leftArm', 'leftLeg', 'rightLeg']);
 
-      if(this.mouseOffsetX < this.x) {
+      if(this.directionX === -1) {
         this.utility.mirrorImage(this.canvas, this.images.body, this.x, this.y, true);
         this.utility.mirrorImage(this.canvas, this.images.head, this.x, this.y, true);
       }
@@ -202,15 +218,15 @@ export default class Player {
       this.canvas.context.strokeStyle = 'green';
       this.canvas.context.strokeRect(this.x, this.y, this.width, this.height);
 
-      // this.canvas.context.strokeStyle = 'red';
-      // this.canvas.context.beginPath();
-      // this.canvas.context.arc(this.x + this.rightArmRotationCenterX, this.y + this.rightArmRotationCenterY, 100, 0, 2 * Math.PI);
-      // const sx = this.rightArmRadius * Math.cos(this.rightArmRadian);
-      // const sy = this.rightArmRadius * Math.sin(this.rightArmRadian);
-      // this.canvas.context.moveTo(this.x + this.rightArmRotationCenterX, this.y + this.rightArmRotationCenterY);
-      // this.canvas.context.lineTo(this.x + this.rightArmRotationCenterX + sx, this.y + this.rightArmRotationCenterY + sy);
-      // this.canvas.context.lineTo(this.mouseOffsetX, this.mouseOffsetY);
-      // this.canvas.context.stroke();
+      this.canvas.context.strokeStyle = 'red';
+      this.canvas.context.beginPath();
+      this.canvas.context.arc(this.x + this.rightArmRotationCenterX, this.y + this.rightArmRotationCenterY, 100, 0, 2 * Math.PI);
+      const sx = this.rightArmRadius * Math.cos(this.rightArmRadian);
+      const sy = this.rightArmRadius * Math.sin(this.rightArmRadian);
+      this.canvas.context.moveTo(this.x + this.rightArmRotationCenterX, this.y + this.rightArmRotationCenterY);
+      this.canvas.context.lineTo(this.x + this.rightArmRotationCenterX + sx, this.y + this.rightArmRotationCenterY + sy);
+      this.canvas.context.lineTo(this.mouseOffsetX, this.mouseOffsetY);
+      this.canvas.context.stroke();
     }
   }
 
@@ -218,21 +234,29 @@ export default class Player {
     for(let limb of namesArray) {
       this.canvas.context.save();
 
-      this.canvas.context.translate(this.x + this[`${limb}RotationCenterX`],
-        this.y + this[`${limb}RotationCenterY`]);
-  
-      this.canvas.context.rotate(this[`${limb}Radian`]);
-  
-      this.canvas.context.translate(-this.x - this[`${limb}RotationCenterX`],
-        -this.y - this[`${limb}RotationCenterY`]);
-  
+      let rcx = this.x + this[`${limb}RotationCenterX`];
+      let rcy = this.y + this[`${limb}RotationCenterY`];
 
-      if(this.mouseOffsetX < this.x) {
-        if(limb === 'rightArm')
-          this.utility.mirrorImage(this.canvas, this.images.gun, this.x, this.y, true);
-        this.utility.mirrorImage(this.canvas, this.images[limb], this.x, this.y, true);
-      }
-      else {
+      // right arm has rotationCenterX changed in logic
+      if(this.directionX === -1 && limb !== 'rightArm')
+        rcx = this.x + this.width - this[`${limb}RotationCenterX`];
+
+      this.canvas.context.translate(rcx, rcy);
+
+      this.canvas.context.rotate(this[`${limb}Radian`]);
+
+      this.canvas.context.translate(-rcx, -rcy);
+  
+      if(this.directionX === -1) {
+        if(limb === 'rightArm') {
+          this.canvas.context.scale(1, -1);
+          this.canvas.context.drawImage(this.images.gun, this.x + this.rightArmRotationCenterX - (this.width - this.rightArmRotationCenterX), -this.y - this.height + this.rightArmRotationCenterY);
+          this.canvas.context.drawImage(this.images[limb], this.x + this.rightArmRotationCenterX - (this.width - this.rightArmRotationCenterX), -this.y - this.height + this.rightArmRotationCenterY);
+        } else {
+          this.canvas.context.scale(-1, 1);
+          this.canvas.context.drawImage(this.images[limb], -this.x - this.width, this.y);
+        }
+      } else {
         if(limb === 'rightArm')
           this.canvas.context.drawImage(this.images.gun, this.x, this.y);
         this.canvas.context.drawImage(this.images[limb], this.x, this.y);
