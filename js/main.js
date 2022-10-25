@@ -9,7 +9,6 @@ class Main {
   entities;
   utility;
 
-  backgroundImage;
   backgroundMusic;
 
   constructor(data) {
@@ -17,8 +16,6 @@ class Main {
     this.entities = data.entities;
     this.utility = data.utility;
     this.resources = data.resources;
-
-    this.backgroundImage = this.resources.loadResource('images/background.jpg', 'background');
 
     this.backgroundMusic = new Audio('audio/music.mp3');
     this.backgroundMusic.addEventListener('loadeddata', () => {
@@ -28,7 +25,16 @@ class Main {
       });
     });
 
-    this.resources.loadResource('images/pope.png', 'pope');
+    // this.resources.loadResource('images/pope.png', 'pope');
+
+    this.resources.loadResource('images/papamobile/arm.png', 'papamobileArm');
+    this.resources.loadResource('images/papamobile/body.png', 'papamobileBody');
+    this.resources.loadResource('images/papamobile/gun.png', 'papamobileGun');
+    this.resources.loadResource('images/papamobile/head.png', 'papamobileHead');
+    this.resources.loadResource('images/papamobile/leftWheel.png', 'papamobileLeftWheel');
+    this.resources.loadResource('images/papamobile/rightWheel.png', 'papamobileRightWheel');
+    this.resources.loadResource('images/papamobile/vehicle.png', 'papamobileVehicle');
+
     this.resources.loadResource('images/player/body.png', 'playerBody');
     this.resources.loadResource('images/player/gun.png', 'playerGun');
     this.resources.loadResource('images/player/head.png', 'playerHead');
@@ -109,7 +115,7 @@ class Main {
   gameLoop() {
     this.entities.logic();
 
-    this.canvas.context.drawImage(this.backgroundImage, 0, 0);
+    this.canvas.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
     this.entities.draw();
   }
