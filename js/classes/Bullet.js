@@ -4,7 +4,7 @@ export default class Bullet {
   y;
   speedX;
   speedY;
-  radius = 4;
+  radius = 3;
   speedBase = 20;
 
   removeFromGame = false;
@@ -45,6 +45,7 @@ export default class Bullet {
 
   draw() {
     this.canvas.context.fillStyle = 'yellow';
+
     this.canvas.context.beginPath();
     this.canvas.context.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
     this.canvas.context.fill();
