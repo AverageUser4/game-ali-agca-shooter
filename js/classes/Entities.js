@@ -34,8 +34,13 @@ class Entities {
   }
 
   logic() {
-    for(let entity of [...this.players, ...this.enemies, ...this.bullets])
-      entity.logic();
+    for(let entity of [...this.platforms, ...this.players, ...this.enemies, ...this.bullets])
+      entity.logic({
+        players: this.players,
+        enemies: this.enemies,
+        bullets: this.bullets,
+        platforms: this.platforms,
+      });
 
     for(let i = 0; i < this.enemies.length; i++)
       if(this.enemies[i].removeFromGame) {

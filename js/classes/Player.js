@@ -2,7 +2,16 @@ import Bullet from './Bullet.js';
 
 export default class Player {
 
-  x = 0;
+  set x(value) {
+    this._x = value;
+    this.hitboxX = value;
+    if(this.directionX === -1)
+      this.hitboxX += (this.width - this.hitboxWidth);
+  }
+  get x() {
+    return this._x;
+  }
+  _x = 0;
   y = 0;
   maxX;
   maxY;
@@ -10,6 +19,9 @@ export default class Player {
   height = 219;
   speed = 7;
   health = 100;
+
+  hitboxX = 0;
+  hitboxWidth = 70;
 
   directionX = 1;
 
@@ -20,6 +32,7 @@ export default class Player {
   maxJumpCooldown = 30;
   jumpForce = 10;
   jumpedTwice = false;
+  canJump = true;
   
   pressedKeys = new Set();
   mouseOffsetX;
@@ -124,7 +137,7 @@ export default class Player {
     }
   }
 
-  movementLogic() {
+  movementLogic(entities) {
     this.x = this.pressedKeys.has('a') ? this.x - this.speed : this.x;
     this.x = this.pressedKeys.has('d') ? this.x + this.speed : this.x;
 
@@ -136,29 +149,50 @@ export default class Player {
 
 
     this.jumpCooldown--;
-    if(this.jumpCooldown <= 0)
-      this.jumpedTwice = false;
 
-    if(this.pressedKeys.has('w') && this.jumpCooldown <= 0) {
+    if(this.pressedKeys.has('w') && this.canJump) {
       this.jumpCooldown = this.maxJumpCooldown;
       this.jumpSFX.cloneNode().play();
+      this.jumpedTwice = false;
+      this.canJump = false;
     }
 
-    if(this.jumpCooldown > 0) {
-      if(this.jumpCooldown > 0.5 * this.maxJumpCooldown)
-        this.y -= (this.jumpForce - this.maxJumpCooldown / this.jumpCooldown);
-      else if(this.jumpCooldown <= 0.4 * this.maxJumpCooldown) {
-        if(!this.jumpedTwice) {
-          this.jumpCooldown = this.maxJumpCooldown * 0.8;
-          this.jumpedTwice = true;
-        } else
-          this.y += 1.3 * this.jumpForce;
+    if(this.jumpCooldown > this.maxJumpCooldown / 2)
+      this.y -= this.jumpForce;
+    else if(this.jumpCooldown > this.maxJumpCooldown / 4) {
+      if(!this.jumpedTwice && this.pressedKeys.has('w')) {
+        this.jumpCooldown = this.maxJumpCooldown;
+        this.jumpedTwice = true;
+        this.jumpSFX.cloneNode().play();
       }
     }
+    else
+      this.y += this.jumpForce;
 
+    if(this.y >= this.maxY)
+      this.canJump = true;
+
+    for(let platform of entities.platforms) {
+      if(
+          !platform.collidable ||
+          this.hitboxX + this.hitboxWidth < platform.x ||
+          this.hitboxX > platform.x2 ||
+          this.y + this.height < platform.y ||
+          this.y + this.height > platform.y2
+        )
+        continue;
+
+        if(this.pressedKeys.has('s'))
+          platform.makeNonCollidable(10);
+
+        if(this.jumpCooldown <= this.maxJumpCooldown / 4) {
+          this.y = platform.y - this.height;
+          this.canJump = true;
+        }
+    }
 
     this.x = Math.min(Math.max(this.x, 0), this.maxX);
-    this.y = Math.min(Math.max(this.y, 0), this.maxY);
+    this.y = Math.min(this.y, this.maxY);
 
     if(this.mouseOffsetX < this.x + this.width / 2)
       this.directionX = -1;
@@ -196,8 +230,8 @@ export default class Player {
     }
   }
 
-  logic() {
-    this.movementLogic();
+  logic(entities) {
+    this.movementLogic(entities);
     this.attackLogic();
   }
 
@@ -217,6 +251,9 @@ export default class Player {
 
     this.canvas.context.strokeStyle = 'green';
     this.canvas.context.strokeRect(this.x, this.y, this.width, this.height);
+
+    this.canvas.context.strokeStyle = 'blue';
+    this.canvas.context.strokeRect(this.hitboxX, this.y, this.hitboxWidth, this.height);
 
     this.canvas.context.strokeStyle = 'red';
     this.canvas.context.beginPath();

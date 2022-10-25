@@ -10,6 +10,7 @@ class Main {
   utility;
 
   backgroundImage;
+  backgroundMusic;
 
   constructor(data) {
     this.canvas = data.canvas;
@@ -18,6 +19,14 @@ class Main {
     this.resources = data.resources;
 
     this.backgroundImage = this.resources.loadResource('images/background.jpg', 'background');
+
+    this.backgroundMusic = new Audio('audio/music.mp3');
+    this.backgroundMusic.addEventListener('loadeddata', () => {
+      this.backgroundMusic.play();
+      window.addEventListener('mousemove', () => {
+        this.backgroundMusic.play();
+      });
+    });
 
     this.resources.loadResource('images/pope.png', 'pope');
     this.resources.loadResource('images/player/body.png', 'playerBody');
@@ -54,6 +63,30 @@ class Main {
       coordinates: {
         x: 0,
         y: 580,
+        width: 230,
+        height: 40,
+      }
+    });
+
+    this.entities.createEntity({
+      kind: 'platform',
+      canvas: this.canvas,
+      utility: this.utility,
+      coordinates: {
+        x: 420,
+        y: 350,
+        width: 350,
+        height: 40,
+      }
+    });
+
+    this.entities.createEntity({
+      kind: 'platform',
+      canvas: this.canvas,
+      utility: this.utility,
+      coordinates: {
+        x: 1050,
+        y: 530,
         width: 230,
         height: 40,
       }
