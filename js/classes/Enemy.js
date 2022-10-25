@@ -2,8 +2,8 @@ export default class Enemy {
 
   x = 280;
   y = 100;
-  width;
-  heigth;
+  width = 130;
+  height = 160;
   maxX;
   maxY;
 
@@ -15,25 +15,18 @@ export default class Enemy {
 
   canvas;
   image;
-  imageReady = false;
 
   constructor(data) {
     this.canvas = data.canvas;
     this.utility = data.utility;
+    this.resources = data.resources;
 
     this.image = new Image();
 
-    this.image.addEventListener('load', () => {
-      this.imageReady = true;
-      
-      this.width = this.image.naturalWidth;
-      this.height = this.image.naturalHeight;
+    this.maxX = this.canvas.width - this.width;
+    this.maxY = this.canvas.height * 0.5;
 
-      this.maxX = this.canvas.width - this.width;
-      this.maxY = this.canvas.height * 0.5;
-    });
-
-    this.image.src = 'resources/pope.png';
+    this.image = this.resources.getResource('pope');
   }
 
   logic() {
@@ -59,9 +52,6 @@ export default class Enemy {
   draw() {
     this.canvas.context.strokeStyle = 'red';
     this.canvas.context.strokeRect(this.x, this.y, this.width, this.height);
-
-    if(!this.imageReady) 
-      return;
 
     if(this.directionX >= 0)
       this.canvas.context.drawImage(this.image, this.x, this.y);

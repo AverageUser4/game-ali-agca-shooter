@@ -6,8 +6,8 @@ export default class Player {
   y = 0;
   maxX;
   maxY;
-  width;
-  height;
+  width = 120;
+  height = 219;
   speed = 7;
   health = 100;
 
@@ -17,26 +17,17 @@ export default class Player {
   attackCooldown = 0;
   
   jumpCooldown = 0;
+  maxJumpCooldown = 30;
+  jumpForce = 10;
+  jumpedTwice = false;
   
   pressedKeys = new Set();
   mouseOffsetX;
   mouseOffsetY;
 
-  gunSFX = new Audio('resources/browning.mp3');
-  jumpSFX = new Audio('resources/jump.mp3');
-
-  images = {
-    body: new Image(),
-    gun: new Image(),
-    head: new Image(),
-    leftArm: new Image(),
-    leftLeg: new Image(),
-    rightArm: new Image(),
-    rightLeg: new Image(),
-  }
-  imagesLoaded = 0;
-  imagesRequired = 0;
-  imagesReady = false;
+  gunSFX;
+  jumpSFX;
+  images;
 
   rightArmRotationCenterX = 20;
   rightArmRotationCenterY = 72;
@@ -62,6 +53,24 @@ export default class Player {
     this.canvas = data.canvas;
     this.master = data.master;
     this.utility = data.utility;
+    this.resources = data.resources;
+
+    this.gunSFX = this.resources.getResource('browning');
+    this.jumpSFX = this.resources.getResource('jump');
+  
+    this.images = {
+      body: this.resources.getResource('playerBody'),
+      gun: this.resources.getResource('playerGun'),
+      head: this.resources.getResource('playerHead'),
+      leftArm: this.resources.getResource('playerLeftArm'),
+      leftLeg: this.resources.getResource('playerLeftLeg'),
+      rightArm: this.resources.getResource('playerRightArm'),
+      rightLeg: this.resources.getResource('playerRightLeg'),
+    }
+
+    this.maxX = this.canvas.width - this.width;
+    this.maxY = this.canvas.height - this.height;
+    this.y = this.maxY;
 
     this.canvas.element.addEventListener('mousedown', () => {
       this.isShooting = true;
@@ -71,41 +80,8 @@ export default class Player {
       this.mouseOffsetX = event.offsetX;
       this.mouseOffsetY = event.offsetY;
 
-      /*! https://qr.ae/pvm1Md */
-      let slope = (this.mouseOffsetY - this.y - this.rightArmRotationCenterY) /
-        (this.mouseOffsetX - this.x - this.rightArmRotationCenterX);
-
-      this.rightArmRadian = Math.atan(slope);
-    
-      if(this.mouseOffsetX < this.x + this.rightArmRotationCenterX) {
-        let buf = this.utility.radiansToDegrees(this.rightArmRadian);
-        this.rightArmRadian = this.utility.degreesToRadians(-90 + (-90 + buf));
-      }
+      this.updateRightArmRadian();
     });
-
-    for(let key in this.images) {
-      this.imagesRequired++;
-
-      this.images[key].addEventListener('load', () => {
-        this.imagesLoaded++;
-
-        if(this.imagesLoaded >= this.imagesRequired)
-          this.imagesReady = true;
-
-        this.width = this.images[key].naturalWidth;
-        this.height = this.images[key].naturalHeight;
-
-        this.maxX = this.canvas.width - this.width;
-        this.maxY = this.canvas.height - this.height;
-        this.y = this.maxY;
-      });
-
-      this.images[key].addEventListener('error', () => {
-        console.error(`Unable to load image ${key}`);
-      })
-
-      this.images[key].src = `resources/player/${key}.png`;
-    }
 
     window.addEventListener('mouseup', () => {
       this.isShooting = false;
@@ -118,6 +94,19 @@ export default class Player {
     window.addEventListener('keyup', (event) => {
       this.pressedKeys.delete(event.key);
     });
+  }
+
+  updateRightArmRadian() {
+    /*! https://qr.ae/pvm1Md */
+    let slope = (this.mouseOffsetY - this.y - this.rightArmRotationCenterY) /
+      (this.mouseOffsetX - this.x - this.rightArmRotationCenterX);
+
+    this.rightArmRadian = Math.atan(slope);
+  
+    if(this.mouseOffsetX < this.x + this.rightArmRotationCenterX) {
+      let buf = this.utility.radiansToDegrees(this.rightArmRadian);
+      this.rightArmRadian = this.utility.degreesToRadians(-90 + (-90 + buf));
+    }
   }
 
   moveLimbs() {
@@ -145,17 +134,28 @@ export default class Player {
       )
       this.moveLimbs();
 
-    this.jumpCooldown--;
 
-    if(this.jumpCooldown > 20)
-      this.y -= (10 - 50 / this.jumpCooldown);
-    else if(this.jumpCooldown <= 15)
-      this.y += 10;
+    this.jumpCooldown--;
+    if(this.jumpCooldown <= 0)
+      this.jumpedTwice = false;
 
     if(this.pressedKeys.has('w') && this.jumpCooldown <= 0) {
-      this.jumpCooldown = 40;
+      this.jumpCooldown = this.maxJumpCooldown;
       this.jumpSFX.cloneNode().play();
     }
+
+    if(this.jumpCooldown > 0) {
+      if(this.jumpCooldown > 0.5 * this.maxJumpCooldown)
+        this.y -= (this.jumpForce - this.maxJumpCooldown / this.jumpCooldown);
+      else if(this.jumpCooldown <= 0.4 * this.maxJumpCooldown) {
+        if(!this.jumpedTwice) {
+          this.jumpCooldown = this.maxJumpCooldown * 0.8;
+          this.jumpedTwice = true;
+        } else
+          this.y += 1.3 * this.jumpForce;
+      }
+    }
+
 
     this.x = Math.min(Math.max(this.x, 0), this.maxX);
     this.y = Math.min(Math.max(this.y, 0), this.maxY);
@@ -169,6 +169,8 @@ export default class Player {
       this.rightArmRotationCenterX = this.width - 20;
     else
       this.rightArmRotationCenterX = 20;
+
+    this.updateRightArmRadian();
   }
 
   attackLogic() {
@@ -200,34 +202,31 @@ export default class Player {
   }
 
   draw() {
-    if(this.imagesReady) {
+    this.drawLimbs(['leftArm', 'leftLeg', 'rightLeg']);
 
-      this.drawLimbs(['leftArm', 'leftLeg', 'rightLeg']);
-
-      if(this.directionX === -1) {
-        this.utility.mirrorImage(this.canvas, this.images.body, this.x, this.y, true);
-        this.utility.mirrorImage(this.canvas, this.images.head, this.x, this.y, true);
-      }
-      else {
-        this.canvas.context.drawImage(this.images.body, this.x, this.y);
-        this.canvas.context.drawImage(this.images.head, this.x, this.y);
-      }
-
-      this.drawLimbs(['rightArm']);
-
-      this.canvas.context.strokeStyle = 'green';
-      this.canvas.context.strokeRect(this.x, this.y, this.width, this.height);
-
-      this.canvas.context.strokeStyle = 'red';
-      this.canvas.context.beginPath();
-      this.canvas.context.arc(this.x + this.rightArmRotationCenterX, this.y + this.rightArmRotationCenterY, 100, 0, 2 * Math.PI);
-      const sx = this.rightArmRadius * Math.cos(this.rightArmRadian);
-      const sy = this.rightArmRadius * Math.sin(this.rightArmRadian);
-      this.canvas.context.moveTo(this.x + this.rightArmRotationCenterX, this.y + this.rightArmRotationCenterY);
-      this.canvas.context.lineTo(this.x + this.rightArmRotationCenterX + sx, this.y + this.rightArmRotationCenterY + sy);
-      this.canvas.context.lineTo(this.mouseOffsetX, this.mouseOffsetY);
-      this.canvas.context.stroke();
+    if(this.directionX === -1) {
+      this.utility.mirrorImage(this.canvas, this.images.body, this.x, this.y, true);
+      this.utility.mirrorImage(this.canvas, this.images.head, this.x, this.y, true);
     }
+    else {
+      this.canvas.context.drawImage(this.images.body, this.x, this.y);
+      this.canvas.context.drawImage(this.images.head, this.x, this.y);
+    }
+
+    this.drawLimbs(['rightArm']);
+
+    this.canvas.context.strokeStyle = 'green';
+    this.canvas.context.strokeRect(this.x, this.y, this.width, this.height);
+
+    this.canvas.context.strokeStyle = 'red';
+    this.canvas.context.beginPath();
+    this.canvas.context.arc(this.x + this.rightArmRotationCenterX, this.y + this.rightArmRotationCenterY, 100, 0, 2 * Math.PI);
+    const sx = this.rightArmRadius * Math.cos(this.rightArmRadian);
+    const sy = this.rightArmRadius * Math.sin(this.rightArmRadian);
+    this.canvas.context.moveTo(this.x + this.rightArmRotationCenterX, this.y + this.rightArmRotationCenterY);
+    this.canvas.context.lineTo(this.x + this.rightArmRotationCenterX + sx, this.y + this.rightArmRotationCenterY + sy);
+    this.canvas.context.lineTo(this.mouseOffsetX, this.mouseOffsetY);
+    this.canvas.context.stroke();
   }
 
   drawLimbs(namesArray) {

@@ -1,6 +1,7 @@
 import canvas from './classes/Canvas.js';
 import entities from './classes/Entities.js';
 import utility from './classes/Utility.js';
+import resources from './classes/Resources.js';
 
 class Main {
 
@@ -9,28 +10,53 @@ class Main {
   utility;
 
   backgroundImage;
-  backgroundReady = false;
 
   constructor(data) {
     this.canvas = data.canvas;
     this.entities = data.entities;
     this.utility = data.utility;
+    this.resources = data.resources;
 
-    this.backgroundImage = new Image();
-    this.backgroundImage.addEventListener('load', () => this.backgroundReady = true);
-    this.backgroundImage.src = 'resources/bazylika.jpg';
+    this.backgroundImage = this.resources.loadResource('images/background.jpg', 'background');
+
+    this.resources.loadResource('images/pope.png', 'pope');
+    this.resources.loadResource('images/player/body.png', 'playerBody');
+    this.resources.loadResource('images/player/gun.png', 'playerGun');
+    this.resources.loadResource('images/player/head.png', 'playerHead');
+    this.resources.loadResource('images/player/leftArm.png', 'playerLeftArm');
+    this.resources.loadResource('images/player/leftLeg.png', 'playerLeftLeg');
+    this.resources.loadResource('images/player/rightArm.png', 'playerRightArm');
+    this.resources.loadResource('images/player/rightLeg.png', 'playerRightLeg');
+
+    this.resources.loadResource('audio/browning.mp3', 'browning', 'audio');
+    this.resources.loadResource('audio/jump.mp3', 'jump', 'audio');
+
 
     this.entities.createEntity({ 
       kind: 'player',
       canvas: this.canvas,
       master: this,
       utility: this.utility,
+      resources: this.resources,
     });
 
     this.entities.createEntity({ 
       kind: 'enemy',
       canvas: this.canvas,
-      utility: this.utility
+      utility: this.utility,
+      resources: this.resources,
+    });
+
+    this.entities.createEntity({
+      kind: 'platform',
+      canvas: this.canvas,
+      utility: this.utility,
+      coordinates: {
+        x: 0,
+        y: 580,
+        width: 230,
+        height: 40,
+      }
     });
 
     setInterval(() => this.gameLoop(), 33);
@@ -48,16 +74,13 @@ class Main {
   }
 
   gameLoop() {
-    this.canvas.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
     this.entities.logic();
 
-    if(this.backgroundReady)
-      this.canvas.context.drawImage(this.backgroundImage, 0, 0);
+    this.canvas.context.drawImage(this.backgroundImage, 0, 0);
 
     this.entities.draw();
   }
 
 }
 
-const main = new Main({ canvas, entities, utility });
+const main = new Main({ canvas, entities, utility, resources });

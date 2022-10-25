@@ -1,12 +1,14 @@
 import Player from './Player.js';
 import Enemy from './Enemy.js';
 import Bullet from './Bullet.js';
+import Platform from './Platform.js';
 
 class Entities {
 
   players = [];
   enemies = [];
   bullets = [];
+  platforms = [];
 
   createEntity(data) {
     switch(data.kind) {
@@ -20,6 +22,10 @@ class Entities {
 
       case 'bullet':
         this.bullets.push(new Bullet(data));
+        break;
+
+      case 'platform':
+        this.platforms.push(new Platform(data));
         break;
 
       default:
@@ -45,7 +51,7 @@ class Entities {
   }
 
   draw() {
-    for(let entity of [...this.bullets, ...this.enemies, ...this.players])
+    for(let entity of [...this.platforms, ...this.bullets, ...this.enemies, ...this.players])
       entity.draw();
   }
 
