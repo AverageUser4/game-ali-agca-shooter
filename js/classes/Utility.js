@@ -22,8 +22,10 @@ const radiansToDegrees = (radians) => radians * 180 / Math.PI;
 
 
 export default {
+  RADIAN: 0.017453,
+
   randomInteger,
   mirrorImage,
   degreesToRadians,
-  radiansToDegrees
+  radiansToDegrees,
 };

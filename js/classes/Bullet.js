@@ -44,11 +44,13 @@ export default class Bullet {
   }
 
   draw() {
-    this.canvas.context.fillStyle = 'yellow';
+    this.canvas.context.fillStyle = '#E1B300';
+    this.canvas.context.strokeStyle = 'black';
 
     this.canvas.context.beginPath();
     this.canvas.context.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
     this.canvas.context.fill();
+    this.canvas.context.stroke();
   }
 
 }

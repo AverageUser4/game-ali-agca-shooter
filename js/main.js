@@ -19,7 +19,6 @@ class Main {
 
     this.backgroundMusic = new Audio('audio/music.mp3');
     this.backgroundMusic.addEventListener('loadeddata', () => {
-      this.backgroundMusic.play();
       window.addEventListener('mousemove', () => {
         this.backgroundMusic.play();
       });
@@ -28,16 +27,12 @@ class Main {
     // this.resources.loadResource('images/pope.png', 'pope');
 
     this.resources.loadResource('images/papamobile/arm.png', 'papamobileArm');
-    this.resources.loadResource('images/papamobile/body.png', 'papamobileBody');
-    this.resources.loadResource('images/papamobile/gun.png', 'papamobileGun');
-    this.resources.loadResource('images/papamobile/head.png', 'papamobileHead');
+    this.resources.loadResource('images/papamobile/bodyAndHead.png', 'papamobileBodyAndHead');
     this.resources.loadResource('images/papamobile/leftWheel.png', 'papamobileLeftWheel');
     this.resources.loadResource('images/papamobile/rightWheel.png', 'papamobileRightWheel');
     this.resources.loadResource('images/papamobile/vehicle.png', 'papamobileVehicle');
 
-    this.resources.loadResource('images/player/body.png', 'playerBody');
-    this.resources.loadResource('images/player/gun.png', 'playerGun');
-    this.resources.loadResource('images/player/head.png', 'playerHead');
+    this.resources.loadResource('images/player/bodyAndHead.png', 'playerBodyAndHead');
     this.resources.loadResource('images/player/leftArm.png', 'playerLeftArm');
     this.resources.loadResource('images/player/leftLeg.png', 'playerLeftLeg');
     this.resources.loadResource('images/player/rightArm.png', 'playerRightArm');
