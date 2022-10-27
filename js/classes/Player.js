@@ -39,6 +39,7 @@ export default class Player {
 
   speed = 7;
   health = 100;
+  maxHealth = 100;
 
   hitboxX = 0;
   hitboxWidth = 70;
@@ -246,6 +247,7 @@ export default class Player {
         y: this.rightArm.rotationCenter.y + sy,
         destinationX: this.mouseOffsetX,
         destinationY: this.mouseOffsetY,
+        owner: 'player',
       });
 
       this.gunSFX.cloneNode().play();
@@ -258,6 +260,10 @@ export default class Player {
     this.attackLogic();
   }
 
+  getDamaged() {
+    this.health -= 5;
+  }
+
   draw() {
     this.drawLimbs(['leftArm', 'leftLeg', 'rightLeg']);
 
@@ -267,6 +273,23 @@ export default class Player {
       this.canvas.context.drawImage(this.images.bodyAndHead, this.x, this.y);
 
     this.drawLimbs(['rightArm']);
+
+    // healthbar
+    this.canvas.context.lineWidth = 8;
+    this.canvas.context.strokeStyle = '#444';
+
+    this.canvas.context.beginPath();
+    this.canvas.context.moveTo(this.x, this.y - 10);
+    this.canvas.context.lineTo(this.x + this.width, this.y - 10);
+    this.canvas.context.stroke();
+
+    this.canvas.context.strokeStyle = '#a32315';
+    this.canvas.context.beginPath();
+    this.canvas.context.moveTo(this.x, this.y - 10);
+    this.canvas.context.lineTo(this.x + this.width * this.health / this.maxHealth, this.y - 10);
+    this.canvas.context.stroke();
+
+    this.canvas.context.lineWidth = 1;
 
     this.canvas.context.strokeStyle = 'green';
     this.canvas.context.strokeRect(this.x, this.y, this.width, this.height);
@@ -291,10 +314,6 @@ export default class Player {
 
       let rcx = this[limb].rotationCenter.x;
       let rcy = this[limb].rotationCenter.y;
-
-      // right arm has rotationCenter.x changed in logic
-      // if(this.directionX === -1 && limb !== 'rightArm')
-      //   rcx = this.x + this.width - this[limb].rotationCenter.x;
 
       this.canvas.context.translate(rcx, rcy);
       this.canvas.context.rotate(this[limb].radian);

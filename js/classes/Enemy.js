@@ -9,6 +9,9 @@ export default class Enemy {
   maxX;
   maxY;
 
+  health = 500;
+  maxHealth = 500;
+
   attackCooldown = 0;
   maxAttackCooldown = 50;
 
@@ -42,9 +45,9 @@ export default class Enemy {
 
   constructor(data) {
     // debug
-    window.addEventListener('keydown', (event) => {
-      if(event.key === 'q') this.directionX *= -1;
-    });
+    // window.addEventListener('keydown', (event) => {
+    //   if(event.key === 'q') this.directionX *= -1;
+    // });
 
     this.canvas = data.canvas;
     this.utility = data.utility;
@@ -56,8 +59,8 @@ export default class Enemy {
     this.x = this.canvas.width + this.width;
     this.y = this.canvas.height - this.height;
 
-    this.minX = -this.width * 1.5;
-    this.maxX = this.canvas.width + this.width * 0.5;
+    this.minX = 0 - this.width / 2;
+    this.maxX = this.canvas.width - this.width / 2;
     this.maxY = this.canvas.height - this.height;
 
     this.images = {
@@ -81,10 +84,9 @@ export default class Enemy {
 
   movementLogic() {
     //debug
-    this.x = 500;
+    // this.x = 500;
 
-
-    // this.x += this.speed * this.directionX;
+    this.x += this.speed * this.directionX;
     this.wheels.radian += this.directionX === 1 ? 
       this.utility.RADIAN * this.speed : this.utility.RADIAN * -this.speed;
 
@@ -114,6 +116,7 @@ export default class Enemy {
         y: this.y + this.arm.rotationCenter.y + sy,
         destinationX: this.virtualCursor.x,
         destinationY: this.virtualCursor.y,
+        owner: 'enemy',
       });
 
       this.gunSFX.cloneNode().play();
@@ -124,6 +127,10 @@ export default class Enemy {
   logic(entities) {
     this.movementLogic();
     this.attackLogic(entities);
+  }
+
+  getDamaged() {
+    this.health -= 5;
   }
 
   drawWheels() {
@@ -150,39 +157,29 @@ export default class Enemy {
   }
 
   drawArm() {
-    if(this.directionX === 1) {
-      let rcx = this.x + this.arm.rotationCenter.x;
-      let rcy = this.y + this.arm.rotationCenter.y;
-  
-      this.canvas.context.save();
-  
-      this.canvas.context.translate(rcx, rcy);
-      this.canvas.context.rotate(this.arm.radian);
-      this.canvas.context.translate(-rcx, -rcy);
-  
-      this.canvas.context.drawImage(this.images.arm, this.x, this.y);
-  
-      this.canvas.context.restore();
-    } else {
-      let rcx = this.x + this.width - this.arm.rotationCenter.x;
-      let rcy = this.y + this.arm.rotationCenter.y;
+    let rcx = this.x + this.arm.rotationCenter.x;
+    let rcy = this.y + this.arm.rotationCenter.y;
 
-      this.canvas.context.save();
+    if(this.directionX === -1)
+      rcx = this.x + this.width - this.arm.rotationCenter.x;
 
-      this.canvas.context.translate(rcx, rcy);
-      this.canvas.context.rotate(this.arm.radian);
-      this.canvas.context.translate(-rcx, -rcy);
 
+    this.canvas.context.save();
+
+    this.canvas.context.translate(rcx, rcy);
+    this.canvas.context.rotate(this.arm.radian);
+    this.canvas.context.translate(-rcx, -rcy);
+
+    if(this.directionX  === -1) {
       this.canvas.context.scale(1, -1);
       this.canvas.context.drawImage(this.images.arm, 
-        this.x + 2 * this.arm.rotationCenter.x - this.width,
-        -this.y - this.height + this.arm.rotationCenter.y);
+        this.x + 15,
+        -this.y - this.height + 108);
+      // 15?? 108??
+    } else
+      this.canvas.context.drawImage(this.images.arm, this.x, this.y);
 
-      this.canvas.context.restore();
-
-      this.canvas.context.fillStyle = 'red';
-      this.canvas.context.fillRect(rcx, rcy, 10, 10)
-    }
+    this.canvas.context.restore();
   }
 
   draw() {
@@ -200,6 +197,23 @@ export default class Enemy {
       this.drawWheels();
       this.drawArm();
     }
+
+    // healthbar
+    this.canvas.context.lineWidth = 8;
+    this.canvas.context.strokeStyle = '#444';
+
+    this.canvas.context.beginPath();
+    this.canvas.context.moveTo(this.x, this.y - 10);
+    this.canvas.context.lineTo(this.x + this.width, this.y - 10);
+    this.canvas.context.stroke();
+
+    this.canvas.context.strokeStyle = '#a32315';
+    this.canvas.context.beginPath();
+    this.canvas.context.moveTo(this.x, this.y - 10);
+    this.canvas.context.lineTo(this.x + this.width * this.health / this.maxHealth, this.y - 10);
+    this.canvas.context.stroke();
+
+    this.canvas.context.lineWidth = 1;
 
     this.canvas.context.strokeStyle = 'green';
     this.canvas.context.strokeRect(this.x, this.y, this.width, this.height);

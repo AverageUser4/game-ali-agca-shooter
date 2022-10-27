@@ -7,10 +7,13 @@ export default class Bullet {
   radius = 3;
   speedBase = 20;
 
+  owner;
+
   removeFromGame = false;
 
   constructor(data) {
     this.canvas = data.canvas;
+    this.owner = data.owner;
 
     this.x = data.x;
     this.y = data.y;
@@ -35,9 +38,31 @@ export default class Bullet {
     this.speedY = this.speedBase * proportionY;
   }
 
-  logic() {
+  isColliding(x, y, w, h) {
+    const x2 = x + w;
+    const y2 = y + h;
+
+    if(
+        this.x + this.radius < x ||
+        this.x > x2 ||
+        this.y + this.radius < y ||
+        this.y > y2
+      )
+        return false;
+
+    this.x = 99999;
+    this.y = 99999;
+    return true;
+  }
+
+  logic(entities) {
     this.x += this.speedX;
     this.y += this.speedY;
+
+    if(this.owner === 'enemy' && this.isColliding(entities.players[0].hitboxX, entities.players[0].y, entities.players[0].hitboxWidth, entities.players[0].height))
+      entities.players[0].getDamaged();
+    else if(this.owner === 'player' && this.isColliding(entities.enemies[0].x, entities.enemies[0].y, entities.enemies[0].width, entities.enemies[0].height))
+      entities.enemies[0].getDamaged();
 
     this.removeFromGame = this.x > this.canvas.width || this.x < 0 ||
       this.y > this.canvas.height || this.y < 0;
