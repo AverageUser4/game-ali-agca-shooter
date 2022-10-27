@@ -9,11 +9,16 @@ export default class Enemy {
   maxX;
   maxY;
 
+  attackCooldown = 0;
+  maxAttackCooldown = 50;
+
   directionX = -1;
   speed = 10;
 
   canvas;
   images;
+
+  gunSFX;
 
   virtualCursor =  {
     x: 0, y: 0
@@ -36,9 +41,17 @@ export default class Enemy {
   };
 
   constructor(data) {
+    // debug
+    window.addEventListener('keydown', (event) => {
+      if(event.key === 'q') this.directionX *= -1;
+    });
+
     this.canvas = data.canvas;
     this.utility = data.utility;
     this.resources = data.resources;
+    this.master = data.master;
+
+    this.gunSFX = this.resources.getResource('browning');
 
     this.x = this.canvas.width + this.width;
     this.y = this.canvas.height - this.height;
@@ -66,27 +79,10 @@ export default class Enemy {
       this.arm.radian = 2 * this.utility.RADIAN * -90 + this.arm.radian;
   }
 
-  logic(entities) {
+  movementLogic() {
     //debug
     this.x = 500;
-    this.directionX = 1;
 
-    const playerX = entities.players[0].x;
-    const playerY = entities.players[0].y;
-
-    const cursorSpeed = 10;
-
-    if(this.virtualCursor.x < playerX)
-      this.virtualCursor.x += cursorSpeed;
-    else if(this.virtualCursor.x > playerX)
-      this.virtualCursor.x -= cursorSpeed;
-
-    if(this.virtualCursor.y < playerY)
-      this.virtualCursor.y += cursorSpeed;
-    else if(this.virtualCursor.y > playerY)
-      this.virtualCursor.y -= cursorSpeed;
-
-    this.updateArmRadian();
 
     // this.x += this.speed * this.directionX;
     this.wheels.radian += this.directionX === 1 ? 
@@ -96,6 +92,38 @@ export default class Enemy {
       this.directionX = 1;
     else if(this.x > this.maxX)
       this.directionX = -1;
+  }
+
+  attackLogic(entities) {
+    this.attackCooldown--;
+
+    this.virtualCursor.x = entities.players[0].x;
+    this.virtualCursor.y = entities.players[0].y + 50;
+
+    this.updateArmRadian();
+
+    if(this.attackCooldown <= 0) {
+      const gunPointAdjustment = this.directionX === 1 ? this.utility.RADIAN * 8 : this.utility.RADIAN * -10;
+      const sx = this.arm.radius * Math.cos(this.arm.radian - gunPointAdjustment);
+      const sy = this.arm.radius * Math.sin(this.arm.radian - gunPointAdjustment);
+
+      this.master.request('createEntity', {
+        kind: 'bullet',
+        canvas: this.canvas,
+        x: this.x + this.arm.rotationCenter.x + sx,
+        y: this.y + this.arm.rotationCenter.y + sy,
+        destinationX: this.virtualCursor.x,
+        destinationY: this.virtualCursor.y,
+      });
+
+      this.gunSFX.cloneNode().play();
+      this.attackCooldown = this.maxAttackCooldown;
+    }
+  }
+
+  logic(entities) {
+    this.movementLogic();
+    this.attackLogic(entities);
   }
 
   drawWheels() {
@@ -122,18 +150,39 @@ export default class Enemy {
   }
 
   drawArm() {
-    let rcx = this.x + this.arm.rotationCenter.x;
-    let rcy = this.y + this.arm.rotationCenter.y;
+    if(this.directionX === 1) {
+      let rcx = this.x + this.arm.rotationCenter.x;
+      let rcy = this.y + this.arm.rotationCenter.y;
+  
+      this.canvas.context.save();
+  
+      this.canvas.context.translate(rcx, rcy);
+      this.canvas.context.rotate(this.arm.radian);
+      this.canvas.context.translate(-rcx, -rcy);
+  
+      this.canvas.context.drawImage(this.images.arm, this.x, this.y);
+  
+      this.canvas.context.restore();
+    } else {
+      let rcx = this.x + this.width - this.arm.rotationCenter.x;
+      let rcy = this.y + this.arm.rotationCenter.y;
 
-    this.canvas.context.save();
+      this.canvas.context.save();
 
-    this.canvas.context.translate(rcx, rcy);
-    this.canvas.context.rotate(this.arm.radian);
-    this.canvas.context.translate(-rcx, -rcy);
+      this.canvas.context.translate(rcx, rcy);
+      this.canvas.context.rotate(this.arm.radian);
+      this.canvas.context.translate(-rcx, -rcy);
 
-    this.canvas.context.drawImage(this.images.arm, this.x, this.y);
+      this.canvas.context.scale(1, -1);
+      this.canvas.context.drawImage(this.images.arm, 
+        this.x + 2 * this.arm.rotationCenter.x - this.width,
+        -this.y - this.height + this.arm.rotationCenter.y);
 
-    this.canvas.context.restore();
+      this.canvas.context.restore();
+
+      this.canvas.context.fillStyle = 'red';
+      this.canvas.context.fillRect(rcx, rcy, 10, 10)
+    }
   }
 
   draw() {
@@ -149,8 +198,7 @@ export default class Enemy {
       this.utility.mirrorImage(this.canvas, this.images.vehicle, this.x, this.y, true);
     
       this.drawWheels();
-
-      this.utility.mirrorImage(this.canvas, this.images.arm, this.x, this.y, true);
+      this.drawArm();
     }
 
     this.canvas.context.strokeStyle = 'green';
@@ -161,7 +209,7 @@ export default class Enemy {
     this.canvas.context.arc(this.x + this.arm.rotationCenter.x, this.y + this.arm.rotationCenter.y, this.arm.radius, 0, 2 * Math.PI);
     this.canvas.context.stroke();
 
-    this.canvas.context.fillRect(this.virtualCursor.x, this.virtualCursor.y, 10, 10);
+    // this.canvas.context.fillRect(this.virtualCursor.x, this.virtualCursor.y, 10, 10);
   }
 
 }

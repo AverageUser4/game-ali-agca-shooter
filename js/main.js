@@ -55,6 +55,7 @@ class Main {
       canvas: this.canvas,
       utility: this.utility,
       resources: this.resources,
+      master: this,
     });
 
     this.entities.createEntity({
